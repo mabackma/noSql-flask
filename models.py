@@ -1,8 +1,16 @@
 import pymongo
 from pymongo.server_api import ServerApi
 
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+
+dotenv_path = Path('./venv/.env')
+load_dotenv(dotenv_path=dotenv_path)
+
+MONGO_URL = os.getenv('MONGO_URL')
 client = pymongo.MongoClient(
-    "mongodb+srv://mabackma:bbbbbbbb@cluster0.un3qy.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+    MONGO_URL,
     server_api=ServerApi('1'))
 db = client.noSql_database
 
