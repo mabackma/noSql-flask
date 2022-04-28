@@ -4,7 +4,7 @@ from models import db
 from flask.views import MethodView
 
 
-# Tätä käytetään patch ja put metodeissa
+# Tätä käytetään patch ja put metodeissa kun päivitetään yhtä käyttäjää
 def update_user(request_body, _id):
     username = request_body['username']
 

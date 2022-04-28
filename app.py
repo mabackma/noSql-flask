@@ -1,10 +1,14 @@
-from flask import Flask
-
+from flask import Flask, jsonify
 from controllers.home_controller import home_route_handler
 from controllers.publications_controller import PublicationsRouteHandler
 from controllers.users_controller import UsersRouteHandler, UserRouteHandler
+from errors.validation_error import ValidationError
 
 app = Flask(__name__)
+
+@app.errorhandler(ValidationError)
+def handle_validation_error(err):
+    return jsonify(err=err.args), 400
 
 app.add_url_rule("/", view_func=home_route_handler)
 

@@ -19,7 +19,7 @@ class Publication:
                  title,
                  description,
                  url,
-                 owner=None,
+                 owner=None,  # Oletusarvot owner=None, likes=[], _id=None
                  likes=[],
                  _id=None):
         self.title = title
@@ -51,12 +51,13 @@ class Publication:
 
     # CRUD:n C (Create)
     def create(self):
-        db.publications.insert_one({
+        result = db.publications.insert_one({
             'title': self.title,
             'description': self.description,
             'url': self.url
         })
         print("create() tehty")
+        self._id = str(result.inserted_id)
 
 
     @staticmethod
