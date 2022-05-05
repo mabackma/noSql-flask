@@ -23,15 +23,6 @@ class User:
             _id = str(_id)
         self._id = _id
 
-    @staticmethod
-    def get_all():
-        users_cursor = db.users.find()
-        users_list = list(users_cursor)
-        users = []
-        for user_dictionary in users_list:
-            users.append(User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id']))
-        return users
-
     def create(self):
         result = db.users.insert_one({'username': self.username, 'role': self.role})
         self._id = str(result.inserted_id)
@@ -39,9 +30,8 @@ class User:
     def update(self):
         _filter = {'_id': ObjectId(self._id)}
         _update = {
-            '$set': {'username': self.username}
+            '$set': {'username': self.username, 'role': self.role}
         }
-        print("Updated user " + _id)
         db.users.update_one(_filter, _update)
 
     def to_json(self):
@@ -60,10 +50,19 @@ class User:
         return users
 
     @staticmethod
+    def get_all():
+        users_cursor = db.users.find()
+        users_list = list(users_cursor)
+        users = []
+        for user_dictionary in users_list:
+            users.append(User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id']))
+        return users
+
+    @staticmethod
     def get_by_id(_id):
         user_dictionary = db.users.find_one({'_id': ObjectId(_id)})
         if user_dictionary is None:
-            raise NotFound(message="User not found")
+            raise NotFound(message="user not found")
         user = User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id'])
         return user
 

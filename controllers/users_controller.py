@@ -4,33 +4,21 @@ from models import db, User
 from flask.views import MethodView
 
 
-# Tätä käytetään patch ja put metodeissa kun päivitetään yhtä käyttäjää
-def update_user(request_body, _id):
-    username = request_body['username']
-
-    _filter = {'_id': ObjectId(_id)}
-    _update = {
-        '$set': {'username': username}
-    }
-    print("Updated user " + _id)
-    db.users.update_one(_filter, _update)
-
-
 # vastaa osoitteessa /api/users
 class UsersRouteHandler(MethodView):
     def get(self):
         users_list = User.get_all()
-        return jsonify(users_list=User.list_to_json(users_list))
-        #return jsonify(users=users_list)
+        return jsonify(users=User.list_to_json(users_list))
 
     def post(self):
         request_body = request.get_json()
         user = User(request_body['username'], role=request_body.get('role', 'user'))
         user.create()
         return jsonify(user=user.to_json())
-        #return ""
+
 
 class UserRouteHandler(MethodView):
+
     def get(self, _id):
         user = User.get_by_id(_id)
         return jsonify(user=user.to_json())
@@ -43,12 +31,16 @@ class UserRouteHandler(MethodView):
         request_body = request.get_json()
         user = User.get_by_id(_id)
         user.username = request_body.get('username', user.username)
+        user.role = request_body.get('role', user.role)
+        user.update()
         return jsonify(user=user.to_json())
 
     def put(self, _id):
         request_body = request.get_json()
         user = User.get_by_id(_id)
         user.username = request_body.get('username', user.username)
+        user.role = request_body.get('role', user.role)
+        user.update()
         return jsonify(user=user.to_json())
 
 # Alla samat jutut mutta funktioina
