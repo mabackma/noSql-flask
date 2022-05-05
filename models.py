@@ -1,18 +1,75 @@
 import pymongo
 from pymongo.server_api import ServerApi
-
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from config import Config
+from bson.objectid import ObjectId
 
 dotenv_path = Path('./venv/.env')
 load_dotenv(dotenv_path=dotenv_path)
 
-MONGO_URL = os.getenv('MONGO_URL')
 client = pymongo.MongoClient(
-    MONGO_URL,
+    Config.CONNECTION_STRING,
     server_api=ServerApi('1'))
 db = client.noSql_database
+
+class User:
+    def __init__(self, username, password=None, role='user', _id=None):
+        self.username = username
+        self.passord = password
+        self.role = role
+        if _id is not None:
+            _id = str(_id)
+        self._id = _id
+
+    @staticmethod
+    def get_all():
+        users_cursor = db.users.find()
+        users_list = list(users_cursor)
+        users = []
+        for user_dictionary in users_list:
+            users.append(User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id']))
+        return users
+
+    def create(self):
+        result = db.users.insert_one({'username': self.username, 'role': self.role})
+        self._id = str(result.inserted_id)
+
+    def update(self):
+        _filter = {'_id': ObjectId(self._id)}
+        _update = {
+            '$set': {'username': self.username}
+        }
+        print("Updated user " + _id)
+        db.users.update_one(_filter, _update)
+
+    def to_json(self):
+        return{
+            '_id': str(self._id),
+            'username': self.username,
+            'role': self.role
+        }
+
+    # Palauttaa listan jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
+    @staticmethod
+    def list_to_json(users_list):
+        users = []
+        for user in users_list:
+            users.append(user.to_json())
+        return users
+
+    @staticmethod
+    def get_by_id(_id):
+        user_dictionary = db.users.find_one({'_id': ObjectId(_id)})
+        if user_dictionary is None:
+            raise NotFound(message="User not found")
+        user = User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id'])
+        return user
+
+    @staticmethod
+    def delete_by_id(_id):
+        db.users.delete_one({'_id': ObjectId(_id)})
 
 class Publication:
     def __init__(self,
@@ -32,6 +89,16 @@ class Publication:
         self._id = _id
 
 
+    # CRUD:n C (Create)
+    def create(self):
+        result = db.publications.insert_one({
+            'title': self.title,
+            'description': self.description,
+            'url': self.url
+        })
+        self._id = str(result.inserted_id)
+
+
     def to_json(self):
         return{
             '_id': str(self._id),
@@ -41,6 +108,7 @@ class Publication:
         }
 
 
+    # Palauttaa listan jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
     @staticmethod
     def list_to_json(publication_list):
         publications = []
@@ -49,17 +117,7 @@ class Publication:
         return publications
 
 
-    # CRUD:n C (Create)
-    def create(self):
-        result = db.publications.insert_one({
-            'title': self.title,
-            'description': self.description,
-            'url': self.url
-        })
-        print("create() tehty")
-        self._id = str(result.inserted_id)
-
-
+    # Palauttaa listan Publication objekteja
     @staticmethod
     def get_all():
         publications_cursor = db.publications.find()
