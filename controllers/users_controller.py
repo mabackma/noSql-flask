@@ -35,6 +35,7 @@ class UserRouteHandler(MethodView):
         user.update()
         return jsonify(user=user.to_json())
 
+    # Tekee samat asiat kun patch
     def put(self, _id):
         request_body = request.get_json()
         user = User.get_by_id(_id)
