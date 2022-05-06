@@ -1,13 +1,8 @@
 import pymongo
 from pymongo.server_api import ServerApi
-import os
-from dotenv import load_dotenv
-from pathlib import Path
 from config import Config
 from bson.objectid import ObjectId
-
-dotenv_path = Path('./venv/.env')
-load_dotenv(dotenv_path=dotenv_path)
+from errors.not_found import NotFound
 
 client = pymongo.MongoClient(
     Config.CONNECTION_STRING,
@@ -15,6 +10,7 @@ client = pymongo.MongoClient(
 db = client.noSql_database
 
 class User:
+
     def __init__(self, username, password=None, role='user', _id=None):
         self.username = username
         self.passord = password
@@ -35,7 +31,7 @@ class User:
         db.users.update_one(_filter, _update)
 
     def to_json(self):
-        return{
+        return {
             '_id': str(self._id),
             'username': self.username,
             'role': self.role
@@ -70,7 +66,9 @@ class User:
     def delete_by_id(_id):
         db.users.delete_one({'_id': ObjectId(_id)})
 
+
 class Publication:
+
     def __init__(self,
                  title,
                  description,
@@ -87,7 +85,6 @@ class Publication:
             _id = str(_id)
         self._id = _id
 
-
     # CRUD:n C (Create)
     def create(self):
         result = db.publications.insert_one({
@@ -97,15 +94,13 @@ class Publication:
         })
         self._id = str(result.inserted_id)
 
-
     def to_json(self):
-        return{
+        return {
             '_id': str(self._id),
             'title': self.title,
             'description': self.description,
             'url': self.url
         }
-
 
     # Palauttaa listan jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
     @staticmethod
@@ -114,7 +109,6 @@ class Publication:
         for publication in publication_list:
             publications.append(publication.to_json())
         return publications
-
 
     # Palauttaa listan Publication objekteja
     @staticmethod
@@ -127,7 +121,6 @@ class Publication:
                                              _id=publication['_id'])
             publications.append(publication_object)
         return publications
-
 
     """
         publications_list = list(publications_cursor)

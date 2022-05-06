@@ -1,6 +1,5 @@
 from flask import request, jsonify
-from bson import ObjectId
-from models import db, User
+from models import User
 from flask.views import MethodView
 
 
@@ -29,9 +28,15 @@ class UserRouteHandler(MethodView):
 
     def patch(self, _id):
         request_body = request.get_json()
+
+        # haetaan user tietokannasta id:n perusteella
         user = User.get_by_id(_id)
+
+        # muutetaan userin arvoja
         user.username = request_body.get('username', user.username)
         user.role = request_body.get('role', user.role)
+
+        # päivitetään user tietokantaan
         user.update()
         return jsonify(user=user.to_json())
 
