@@ -49,47 +49,11 @@ class UserRouteHandler(MethodView):
         user.update()
         return jsonify(user=user.to_json())
 
-# Alla samat jutut mutta funktioina
 """
-def users_route_handler():
-    if request.method == "GET":
-        users_cursor = db.users.find()
-        users_list = list(users_cursor)
-
-        for user in users_list:
-            user["_id"] = str(user["_id"])
-        return jsonify(users=users_list)
-
-    elif request.method == "POST":
-        request_body = request.get_json()
-        username = request_body["username"]
-
-        db.users.insert_one({"username": username})
-        return "lisätään käyttäjä: " + username
-
-
-def user_route_handler(_id):
-    if request.method == "GET":
-        user = db.users.find_one({'_id': ObjectId(_id)})
-        user['_id'] = str(user['_id'])
-        print(user)
-        return jsonify(user=user)
-
-    elif request.method == "DELETE":
-        db.users.delete_one({'_id': ObjectId(_id)})
-        return ""
-
-    elif request.method == "PATCH" or request.method == "PUT":
-        request_body = request.get_json()
-        username = request_body['username']
-        # username = request_body.get('username', '') myös mahdollista oletusarvolla ''
-
-        _filter = {'_id': ObjectId(_id)}
-        _update = {
-            '$set': {'username': username}
-        }
-        print("Updated user " + _id)
-        db.users.update_one(_filter, _update)
-        return ""
+class PictureRouteHandler(MethodView):
+    
+    def get(self):
+        
+        
 """
 

@@ -3,6 +3,7 @@ from pymongo.server_api import ServerApi
 from config import Config
 from bson.objectid import ObjectId
 from errors.not_found import NotFound
+from errors.validation_error import ValidationError
 
 client = pymongo.MongoClient(
     Config.CONNECTION_STRING,
@@ -13,14 +14,17 @@ class User:
 
     def __init__(self, username, password=None, role='user', _id=None):
         self.username = username
-        self.passord = password
+        self.password = password
         self.role = role
         if _id is not None:
             _id = str(_id)
         self._id = _id
 
     def create(self):
-        result = db.users.insert_one({'username': self.username, 'role': self.role})
+        user = db.users.find_one({'username': self.username})
+        if user is not None:
+            raise ValidationError(message='username must be unique')
+        result = db.users.insert_one({'username': self.username, 'role': self.role, 'password': self.password})
         self._id = str(result.inserted_id)
 
     def update(self):
@@ -28,6 +32,8 @@ class User:
         _update = {
             '$set': {'username': self.username, 'role': self.role}
         }
+        print(_filter)
+        print(_update)
         db.users.update_one(_filter, _update)
 
     def to_json(self):
@@ -37,7 +43,7 @@ class User:
             'role': self.role
         }
 
-    # Palauttaa listan jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
+    # Palauttaa listan jsoneita. Jokainen User objekti listassa muutettu json muotoon.
     @staticmethod
     def list_to_json(users_list):
         users = []
@@ -60,6 +66,15 @@ class User:
         if user_dictionary is None:
             raise NotFound(message="user not found")
         user = User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id'])
+        return user
+
+    @staticmethod
+    def get_by_username(username):
+        user_dictionary = db.users.find_one({'username': username})
+        if user_dictionary is None:
+            raise NotFound(message="user not found")
+        user = User(user_dictionary['username'], role=user_dictionary['role'], _id=user_dictionary['_id'],
+                    password= user_dictionary['password'])
         return user
 
     @staticmethod
@@ -94,6 +109,17 @@ class Publication:
         })
         self._id = str(result.inserted_id)
 
+    # lisätty 9.5
+    # TODO: Muuta url visibilityksi
+    def update(self):
+        _filter = {'_id': ObjectId(self._id)}
+        _update = {
+            '$set': {'title': self.title, 'description': self.description, 'url': self.url}
+        }
+        print("päivitetään näillä arvoilla:")
+        print(_update)
+        db.publications.update_one(_filter, _update)
+
     def to_json(self):
         return {
             '_id': str(self._id),
@@ -122,10 +148,20 @@ class Publication:
             publications.append(publication_object)
         return publications
 
-    """
-        publications_list = list(publications_cursor)
+    # lisätty 9.5
+    @staticmethod
+    def get_by_id(_id):
+        publication_dictionary = db.publications.find_one({'_id': ObjectId(_id)})
+        if publication_dictionary is None:
+            raise NotFound(message="publication not found")
+        publication = Publication(publication_dictionary['title'], description=publication_dictionary['description'],
+                                  url=publication_dictionary['url'], _id=publication_dictionary['_id'])
+        return publication
 
-        for publication in publications_list:
-            publication["_id"] = str(publication["_id"])
-        return publications_list
-    """
+    # lisätty 9.5
+    @staticmethod
+    def delete_by_id(_id):
+        db.publications.delete_one({'_id': ObjectId(_id)})
+
+
+
