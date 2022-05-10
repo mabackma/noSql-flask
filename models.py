@@ -21,9 +21,13 @@ class User:
         self._id = _id
 
     def create(self):
+
+        # Katsotaan onko sen niminen käyttäjä jo olemassa
         user = db.users.find_one({'username': self.username})
         if user is not None:
             raise ValidationError(message='username must be unique')
+
+        # Jos käyttäjää ei ollut olemassa niin luodaan se
         result = db.users.insert_one({'username': self.username, 'role': self.role, 'password': self.password})
         self._id = str(result.inserted_id)
 
@@ -32,7 +36,7 @@ class User:
         _update = {
             '$set': {'username': self.username, 'role': self.role}
         }
-        print(_filter)
+        print("päivitetään näillä arvoilla:")
         print(_update)
         db.users.update_one(_filter, _update)
 
@@ -88,13 +92,15 @@ class Publication:
                  title,
                  description,
                  url,
-                 owner=None,  # Oletusarvot owner=None, likes=[], _id=None
+                 owner=None,  # Oletusarvot owner=None, visibility=2, likes=[], _id=None
+                 visibility=2,
                  likes=[],
                  _id=None):
         self.title = title
         self.description = description
         self.url = url
         self.owner = owner
+        self.visibility = visibility
         self.likes = likes
         if _id is not None:
             _id = str(_id)
@@ -105,27 +111,33 @@ class Publication:
         result = db.publications.insert_one({
             'title': self.title,
             'description': self.description,
-            'url': self.url
+            'url': self.url,
+            'owner': ObjectId(self.owner),
+            'visibility': self.visibility
         })
         self._id = str(result.inserted_id)
 
     # lisätty 9.5
-    # TODO: Muuta url visibilityksi
     def update(self):
         _filter = {'_id': ObjectId(self._id)}
         _update = {
-            '$set': {'title': self.title, 'description': self.description, 'url': self.url}
+            '$set': {'title': self.title, 'description': self.description, 'visibility': self.visibility}
         }
         print("päivitetään näillä arvoilla:")
         print(_update)
         db.publications.update_one(_filter, _update)
 
     def to_json(self):
+        owner = self.owner
+        if owner is not None:
+            owner = str(owner)
         return {
             '_id': str(self._id),
             'title': self.title,
             'description': self.description,
-            'url': self.url
+            'url': self.url,
+            'owner': owner,
+            'visibility': self.visibility
         }
 
     # Palauttaa listan jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
@@ -136,16 +148,23 @@ class Publication:
             publications.append(publication.to_json())
         return publications
 
+    @staticmethod
+    def _create_list_of_publications(list_of_dictionaries):
+        publications = []
+        for publication in list_of_dictionaries:
+            publication_object = Publication(publication['title'], publication['description'], publication['url'],
+                                             # toinen argumentti on oletusarvo jos owneria ei löydy
+                                             _id=publication['_id'], owner=publication.get('owner', None),
+                                             visibility=publication.get('visibility', 2))
+            publications.append(publication_object)
+        return publications
+
     # Palauttaa listan Publication objekteja
     @staticmethod
     def get_all():
         publications_cursor = db.publications.find()
         publications_list = list(publications_cursor)
-        publications = []
-        for publication in publications_list:
-            publication_object = Publication(publication['title'], publication['description'], publication['url'],
-                                             _id=publication['_id'])
-            publications.append(publication_object)
+        publications = Publication._create_list_of_publications(publications_list)
         return publications
 
     # lisätty 9.5
@@ -155,8 +174,29 @@ class Publication:
         if publication_dictionary is None:
             raise NotFound(message="publication not found")
         publication = Publication(publication_dictionary['title'], description=publication_dictionary['description'],
-                                  url=publication_dictionary['url'], _id=publication_dictionary['_id'])
+                                  url=publication_dictionary['url'], _id=publication_dictionary['_id'],
+                                  visibility=publication_dictionary['visibility'])
         return publication
+
+    @staticmethod
+    def get_by_visibility(visibility=2):
+        publications_cursor = db.publications.find({'visibility': visibility})
+        publications_list = list(publications_cursor)
+        publications = Publication._create_list_of_publications(publications_list)
+        return publications
+
+    @staticmethod
+    def get_logged_in_users_and_public_publications(logged_in_user):
+        _filter = {
+            '$or': [
+                {'owner': ObjectId(logged_in_user['sub'])},
+                {'visibility': {'$in': [1, 2]}}
+            ]
+        }
+        publications_cursor = db.publications.find(_filter)
+        publications_list = list(publications_cursor)
+        publications = Publication._create_list_of_publications(publications_list)
+        return publications
 
     # lisätty 9.5
     @staticmethod
