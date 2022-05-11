@@ -1,5 +1,6 @@
 from flask.views import MethodView
 from flask import request, jsonify
+from errors.not_found import NotFound
 from models import Publication
 from validators.validation_publications import validate_add_publication
 from flask_jwt_extended import jwt_required, get_jwt
@@ -30,6 +31,7 @@ class PublicationsRouteHandler(MethodView):
     # tämä vastaa get request methodiin osoitteessa /api/publications
     @jwt_required(optional=True)
     def get(self):
+        publications = []
         logged_in_user = get_jwt()
         print("######################### logged in user: ", logged_in_user)
         if not logged_in_user:
@@ -46,19 +48,40 @@ class PublicationsRouteHandler(MethodView):
         return jsonify(publications=Publication.list_to_json(publications))
 
 
-# Alla oleva route handler lisätty 9.5
-# TODO lisää gettiin logged_in_user ja samat ehdot kun PublicationsRouteHandlerin getissä
 class PublicationRouteHandler(MethodView):
 
+    @jwt_required(optional=True)
     def get(self, _id):
-        publication = Publication.get_by_id(_id)
+        publication = None
+        logged_in_user = get_jwt()
+        if logged_in_user:
+            if logged_in_user['role'] == 'admin':
+                publication = Publication.get_by_id(_id)
+            elif logged_in_user['role'] == 'user':
+                publication = Publication.get_logged_in_users_and_public_publication(_id, logged_in_user)
+        else: # kun käyttäjä ei ole kirjautunut sisään
+            publication = Publication.get_one_by_id_and_visibility(_id)
         return jsonify(publication=publication.to_json())
 
+    @jwt_required(optional=False) # @jwt_required(), False on oletusarvo
     def delete(self, _id):
-        Publication.delete_by_id(_id)
+        logged_in_user = get_jwt()
+        if logged_in_user['role'] == 'admin':
+            Publication.delete_by_id(_id)
+        elif logged_in_user['role'] == 'user':
+            Publication.delete_by_id_and_owner(_id, logged_in_user)
         return ""
 
+    @jwt_required(optional=False)
     def patch(self, _id):
+        logged_in_user = get_jwt()
+        publication = Publication.get_by_id(_id)
+
+        # käyttäjä on aina 'admin' tai 'user', ja vain 'user' voi saada NotFound errorin.
+        # 'admin' voi aina muokata publicationia.
+        if logged_in_user['role'] == 'user':
+            if publication.owner is None or str(publication.owner) != logged_in_user['sub']:
+                raise NotFound(message="publication not found")
         request_body = request.get_json()
 
         # haetaan publication tietokannasta id:n perusteella
@@ -74,7 +97,13 @@ class PublicationRouteHandler(MethodView):
         return jsonify(publication=publication.to_json())
 
     # Tekee samat asiat kun patch
+    @jwt_required(optional=False)
     def put(self, _id):
+        logged_in_user = get_jwt()
+        publication = Publication.get_by_id(_id)
+        if logged_in_user['role'] == 'user':
+            if publication.owner is None or str(publication.owner) != logged_in_user['sub']:
+                raise NotFound(message="publication not found")
         request_body = request.get_json()
         publication = Publication.get_by_id(_id)
         publication.title = request_body.get('title', publication.title)

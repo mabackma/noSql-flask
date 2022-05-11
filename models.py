@@ -117,7 +117,6 @@ class Publication:
         })
         self._id = str(result.inserted_id)
 
-    # lisätty 9.5
     def update(self):
         _filter = {'_id': ObjectId(self._id)}
         _update = {
@@ -127,6 +126,7 @@ class Publication:
         print(_update)
         db.publications.update_one(_filter, _update)
 
+    # Palauttaa Jsonin objektista
     def to_json(self):
         owner = self.owner
         if owner is not None:
@@ -140,7 +140,7 @@ class Publication:
             'visibility': self.visibility
         }
 
-    # Palauttaa listan jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
+    # Palauttaa listan Jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
     @staticmethod
     def list_to_json(publication_list):
         publications = []
@@ -148,60 +148,98 @@ class Publication:
             publications.append(publication.to_json())
         return publications
 
+    # Palauttaa Publication objektin
     @staticmethod
-    def _create_list_of_publications(list_of_dictionaries):
+    def _from_json(publication):
+        publication_object = Publication(publication['title'], publication['description'], publication['url'],
+                                         # toinen argumentti on oletusarvo ensimmäiselle argumentille,
+                                         # jos ensimmäistä argumenttia ei löydy
+                                         _id=publication['_id'], owner=publication.get('owner', None),
+                                         visibility=publication.get('visibility', 2))
+        return publication_object
+
+    # Palauttaa listan Publication objekteja
+    @staticmethod
+    def _list_from_json(list_of_dictionaries):
         publications = []
         for publication in list_of_dictionaries:
-            publication_object = Publication(publication['title'], publication['description'], publication['url'],
-                                             # toinen argumentti on oletusarvo jos owneria ei löydy
-                                             _id=publication['_id'], owner=publication.get('owner', None),
-                                             visibility=publication.get('visibility', 2))
+            publication_object = Publication._from_json(publication)
             publications.append(publication_object)
         return publications
 
-    # Palauttaa listan Publication objekteja
     @staticmethod
     def get_all():
         publications_cursor = db.publications.find()
         publications_list = list(publications_cursor)
-        publications = Publication._create_list_of_publications(publications_list)
+        publications = Publication._list_from_json(publications_list)
         return publications
 
-    # lisätty 9.5
     @staticmethod
     def get_by_id(_id):
         publication_dictionary = db.publications.find_one({'_id': ObjectId(_id)})
         if publication_dictionary is None:
             raise NotFound(message="publication not found")
-        publication = Publication(publication_dictionary['title'], description=publication_dictionary['description'],
-                                  url=publication_dictionary['url'], _id=publication_dictionary['_id'],
-                                  visibility=publication_dictionary['visibility'])
+        publication = Publication._from_json(publication_dictionary)
         return publication
 
+    # palauttaa vain kaikille julkiset publicationit
     @staticmethod
     def get_by_visibility(visibility=2):
         publications_cursor = db.publications.find({'visibility': visibility})
         publications_list = list(publications_cursor)
-        publications = Publication._create_list_of_publications(publications_list)
+        publications = Publication._list_from_json(publications_list)
         return publications
+
+    @staticmethod
+    def get_one_by_id_and_visibility(_id, visibility=2):
+        publication = db.publications.find({'_id': ObjectId(_id), 'visibility': visibility})
+        if publication is None:
+            raise NotFound(message="publication not found")
+        return Publication._from_json(publication)
 
     @staticmethod
     def get_logged_in_users_and_public_publications(logged_in_user):
         _filter = {
             '$or': [
+                # etsitään käyttäjän omat julkaisut
                 {'owner': ObjectId(logged_in_user['sub'])},
+                # etsitään julkaisut joilla visibility 1 tai 2
                 {'visibility': {'$in': [1, 2]}}
             ]
         }
         publications_cursor = db.publications.find(_filter)
         publications_list = list(publications_cursor)
-        publications = Publication._create_list_of_publications(publications_list)
+        publications = Publication._list_from_json(publications_list)
         return publications
 
-    # lisätty 9.5
+    @staticmethod
+    def get_logged_in_users_and_public_publication(_id, logged_in_user):
+        """ SELECT * FROM publications WHERE id = ? AND (owner = ? OR visibility IN (1, 2)) LIMIT 1; """
+        _filter = {
+            # hae ensimmäinen, jossa _id = _id ja (owner = sisäänkirjautunut käyttäjä tai visibility 1 tai visibility 2)
+            '_id': ObjectId(_id),
+            '$or': [
+                {'owner': ObjectId(logged_in_user['sub'])},
+                {'visibility': {'$in': [1, 2]}}
+            ]
+        }
+        publication = db.publications.find_one(_filter)
+        if publication is None:
+            raise NotFound(message="publication not found")
+        publication_object = Publication._from_json(publication)
+        return publication_object
+
     @staticmethod
     def delete_by_id(_id):
-        db.publications.delete_one({'_id': ObjectId(_id)})
+        result = db.publications.delete_one({'_id': ObjectId(_id)})
+        if result.deleted_count == 0:
+            raise NotFound(message="publication not found")
+
+    @staticmethod
+    def delete_by_id_and_owner(_id, owner):
+        result = db.publications.delete_one({'_id': ObjectId(_id), 'owner': ObjectId(owner['sub'])})
+        if result.deleted_count == 0:
+            raise NotFound(message="publication not found")
 
 
 

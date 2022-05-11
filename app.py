@@ -27,7 +27,6 @@ app.add_url_rule("/api/users/<_id>", view_func=UserRouteHandler.as_view('user_ro
 
 app.add_url_rule("/api/publications", view_func=PublicationsRouteHandler.as_view('publications_route_handler'),
                  methods=['GET', 'POST'])
-# lisätty 9.5
 app.add_url_rule("/api/publications/<_id>", view_func=PublicationRouteHandler.as_view('publication_route_handler'),
                  methods=["GET", "DELETE", "PATCH", "PUT"])
 
