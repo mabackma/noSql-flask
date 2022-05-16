@@ -6,6 +6,8 @@ from validators.validation_publications import validate_add_publication
 from flask_jwt_extended import jwt_required, get_jwt
 
 
+# Alla olevissa metodeissa @jwt_required(optional=True) tarkoittaa että kuka vaan voi suorittaa metodin.
+# @jwt_required(optional=False) vaatii tokenin, eli käyttäjän pitää olla sisäänkirjautunut.
 class PublicationsRouteHandler(MethodView):
 
     @validate_add_publication

@@ -34,10 +34,19 @@ class User:
     def update(self):
         _filter = {'_id': ObjectId(self._id)}
         _update = {
-            '$set': {'username': self.username, 'role': self.role}
+            '$set': {'username': self.username}
         }
-        print("päivitetään näillä arvoilla:")
-        print(_update)
+        # hae käyttäjä jonka käyttäjänimi on serf.usernamen arvo ja _id eri suuri kuin self._id:n arvo
+        user = db.users.find_one({'username': self.username, '_id': {'$ne': ObjectId(self._id)}})
+        if user is not None:
+            raise ValidationError(message="username must be unique")
+        db.users.update_one(_filter, _update)
+
+    def update_password(self):
+        _filter = {'_id': ObjectId(self._id)}
+        _update = {
+            '$set': {'password': self.password}
+        }
         db.users.update_one(_filter, _update)
 
     def to_json(self):

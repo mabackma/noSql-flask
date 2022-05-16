@@ -26,6 +26,7 @@ class UserRouteHandler(MethodView):
         User.delete_by_id(_id)
         return ""
 
+    # Admineja varten
     def patch(self, _id):
         request_body = request.get_json()
 
