@@ -29,7 +29,7 @@ class LoginRouteHandler(MethodView):
 
         # 2 tarkistetaan onko salasana oikein
         if sha256.verify(request_body['password'], user.password):
-            access_token = create_access_token(user._id,
+            access_token = create_access_token(user.get_id(),
                            additional_claims={'username': user.username, 'role': user.role})
             return jsonify(access_token=access_token)
         raise NotFound(message="user not found")

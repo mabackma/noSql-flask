@@ -20,6 +20,10 @@ class User:
             _id = str(_id)
         self._id = _id
 
+    def get_id(self):
+        return self._id
+
+
     def create(self):
 
         # Katsotaan onko sen niminen käyttäjä jo olemassa
@@ -103,8 +107,11 @@ class Publication:
                  url,
                  owner=None,  # Oletusarvot owner=None, visibility=2, likes=[], _id=None
                  visibility=2,
-                 likes=[],
+                 likes=None,   # likes lista sisältää käyttäjien _id arvoja ObjectId
                  _id=None):
+        if likes is None:
+            likes = []
+        self.likes = likes
         self.title = title
         self.description = description
         self.url = url
@@ -135,8 +142,19 @@ class Publication:
         print(_update)
         db.publications.update_one(_filter, _update)
 
+    def like(self):
+        _filter = {'_id': ObjectId(self._id)}
+        _update = {
+            '$set': {'likes': self.likes}
+        }
+        db.publications.update_one(_filter, _update)
+
     # Palauttaa Jsonin objektista
     def to_json(self):
+        likes = []
+        for user_id in self.likes:
+            likes.append(str(user_id))
+
         owner = self.owner
         if owner is not None:
             owner = str(owner)
@@ -146,7 +164,9 @@ class Publication:
             'description': self.description,
             'url': self.url,
             'owner': owner,
-            'visibility': self.visibility
+            'visibility': self.visibility,
+            'likes': likes
+            # 'likes': [str(user_id) for user_id in self.likes]
         }
 
     # Palauttaa listan Jsoneita. Jokainen Publication objekti listassa muutettu json muotoon.
@@ -164,7 +184,8 @@ class Publication:
                                          # toinen argumentti on oletusarvo ensimmäiselle argumentille,
                                          # jos ensimmäistä argumenttia ei löydy
                                          _id=publication['_id'], owner=publication.get('owner', None),
-                                         visibility=publication.get('visibility', 2))
+                                         visibility=publication.get('visibility', 2),
+                                         likes=publication.get('likes', []))
         return publication_object
 
     # Palauttaa listan Publication objekteja

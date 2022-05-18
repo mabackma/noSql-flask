@@ -1,7 +1,9 @@
 from flask import Flask, jsonify
-from controllers.auth_controller import RegisterRouteHandler, LoginRouteHandler, AccountRouteHandler, AccountPasswordRouteHandler
+from controllers.auth_controller import RegisterRouteHandler, LoginRouteHandler, AccountRouteHandler, \
+    AccountPasswordRouteHandler
 from controllers.home_controller import home_route_handler
-from controllers.publications_controller import PublicationsRouteHandler, PublicationRouteHandler
+from controllers.publications_controller import PublicationsRouteHandler, PublicationRouteHandler, \
+    LikePublicationRouteHandler
 from controllers.users_controller import UsersRouteHandler, UserRouteHandler
 from errors.validation_error import ValidationError
 from errors.not_found import NotFound
@@ -29,6 +31,8 @@ app.add_url_rule("/api/publications", view_func=PublicationsRouteHandler.as_view
                  methods=['GET', 'POST'])
 app.add_url_rule("/api/publications/<_id>", view_func=PublicationRouteHandler.as_view('publication_route_handler'),
                  methods=["GET", "DELETE", "PATCH", "PUT"])
+app.add_url_rule("/api/publications/<_id>/like",
+                 view_func=LikePublicationRouteHandler.as_view('like_publication_route_handler'), methods=['PATCH'])
 
 app.add_url_rule("/api/register", view_func=RegisterRouteHandler.as_view('register_route_handler'), methods=["POST"])
 app.add_url_rule("/api/login", view_func=LoginRouteHandler.as_view('login_route_handler'), methods=["POST"])
