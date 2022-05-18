@@ -121,7 +121,6 @@ class LikePublicationRouteHandler(MethodView):
     @jwt_required(optional=False)
     def patch(self, _id):
         logged_in_user = get_jwt()
-
         publication = Publication.get_by_id(_id)
         found_index = -1   # -1 koska listat alkavat 0, -1 tarkoittaa että käyttäjiä ei ole likes-listassa
 
