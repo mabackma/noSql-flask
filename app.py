@@ -3,7 +3,7 @@ from controllers.auth_controller import RegisterRouteHandler, LoginRouteHandler,
     AccountPasswordRouteHandler
 from controllers.home_controller import home_route_handler
 from controllers.publications_controller import PublicationsRouteHandler, PublicationRouteHandler, \
-    LikePublicationRouteHandler
+    LikePublicationRouteHandler, SharePublicationRouteHandler
 from controllers.users_controller import UsersRouteHandler, UserRouteHandler
 from errors.validation_error import ValidationError
 from errors.not_found import NotFound
@@ -33,6 +33,8 @@ app.add_url_rule("/api/publications/<_id>", view_func=PublicationRouteHandler.as
                  methods=["GET", "DELETE", "PATCH", "PUT"])
 app.add_url_rule("/api/publications/<_id>/like",
                  view_func=LikePublicationRouteHandler.as_view('like_publication_route_handler'), methods=['PATCH'])
+app.add_url_rule("/api/publications/<_id>/share",
+                 view_func=SharePublicationRouteHandler.as_view('share_publication_route_handler'), methods=['PATCH'])
 
 app.add_url_rule("/api/register", view_func=RegisterRouteHandler.as_view('register_route_handler'), methods=["POST"])
 app.add_url_rule("/api/login", view_func=LoginRouteHandler.as_view('login_route_handler'), methods=["POST"])

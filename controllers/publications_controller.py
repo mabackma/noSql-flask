@@ -1,3 +1,5 @@
+import string
+import random
 from bson import ObjectId
 from flask.views import MethodView
 from flask import request, jsonify
@@ -150,4 +152,20 @@ class LikePublicationRouteHandler(MethodView):
             publication.likes.append(ObjectId(logged_in_user['sub']))
 
         publication.like()
+        return jsonify(publication=publication.to_json())
+
+class SharePublicationRouteHandler(MethodView):
+    # /api/publications/<_id>/share
+    @jwt_required(optional=False)
+    def patch(self, _id):
+
+        publication = Publication.get_by_id(_id)
+        letters = string.ascii_lowercase
+        if publication.share_link is None:
+            publication.share_link = ''.join(random.choice(letters) for _ in range(8))
+            print('new share link: ', publication.share_link)
+
+        publication.shares += 1
+        publication.share()
+        print('shares: ', publication.shares)
         return jsonify(publication=publication.to_json())
