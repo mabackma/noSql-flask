@@ -280,7 +280,7 @@ class Publication:
         publication.update()
         return jsonify(publication=publication.to_json())
 
-    # admin saa muokata kenen tahansa julkaisua
+    # admin saa poistaa kenen tahansa julkaisua
     @staticmethod
     @validate_delete_publication
     def admin_delete(_id):

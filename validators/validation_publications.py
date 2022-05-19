@@ -1,6 +1,6 @@
 from flask import request
 from errors.validation_error import ValidationError
-from flask_jwt_extended import jwt_required, get_jwt
+from flask_jwt_extended import get_jwt
 
 def validate_add_publication(publications_route_handler):
     def validate_add_publication_wrapper(*args, **kwargs):
@@ -11,7 +11,7 @@ def validate_add_publication(publications_route_handler):
     return validate_add_publication_wrapper
 
 
-
+# Adminin suorittamaa päivitystä varten tehtävä tarkistus
 def validate_patch_publication(publications_route_handler):
     def validate_patch_publication_wrapper(*args, **kwargs):
         logged_in_user = get_jwt()
@@ -21,6 +21,7 @@ def validate_patch_publication(publications_route_handler):
         raise ValidationError(message="Must be admin to update post")
     return validate_patch_publication_wrapper
 
+# Adminin suorittamaa poistoa varten tehtävä tarkistus
 def validate_delete_publication(publications_route_handler):
     def validate_delete_publication_wrapper(*args, **kwargs):
         logged_in_user = get_jwt()
