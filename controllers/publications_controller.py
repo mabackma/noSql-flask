@@ -4,7 +4,7 @@ from bson import ObjectId
 from flask.views import MethodView
 from flask import request, jsonify
 from errors.not_found import NotFound
-from models import Publication
+from models import Publication, Comment
 from validators.auth import validate_logged_in_user
 from validators.validation_publications import validate_add_publication, validate_patch_publication
 from flask_jwt_extended import jwt_required, get_jwt
@@ -159,6 +159,7 @@ class LikePublicationRouteHandler(MethodView):
         publication.like()
         return jsonify(publication=publication.to_json())
 
+
 class SharePublicationRouteHandler(MethodView):
     # /api/publications/<_id>/share
     @jwt_required(optional=False)
@@ -174,3 +175,18 @@ class SharePublicationRouteHandler(MethodView):
         publication.shares += 1
         publication.share()
         return jsonify(publication=publication.to_json())
+
+
+class PublicationCommentsRouteHandler(MethodView):
+
+    @jwt_required(optional=False)
+    @validate_logged_in_user
+    def post(self, _id):
+        request_body = request.get_json()
+        if request_body and 'body' in request_body:
+            logged_in_user = get_jwt()
+            comment = Comment(request_body['body'], logged_in_user['sub'], _id)
+            comment.create()
+            return jsonify(comment=comment.to_json())
+        raise ValidationError(message="body is required")
+
