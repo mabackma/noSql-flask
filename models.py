@@ -1,9 +1,11 @@
 import pymongo
+from flask import jsonify
 from pymongo.server_api import ServerApi
 from config import Config
 from bson.objectid import ObjectId
 from errors.not_found import NotFound
 from errors.validation_error import ValidationError
+from validators.validation_publications import validate_patch_publication, validate_delete_publication
 
 client = pymongo.MongoClient(
     Config.CONNECTION_STRING,
@@ -40,7 +42,7 @@ class User:
         _update = {
             '$set': {'username': self.username}
         }
-        # hae käyttäjä jonka käyttäjänimi on serf.usernamen arvo ja _id eri suuri kuin self._id:n arvo
+        # hae käyttäjä jonka käyttäjänimi on self.usernamen arvo ja _id eri suuri kuin self._id:n arvo
         user = db.users.find_one({'username': self.username, '_id': {'$ne': ObjectId(self._id)}})
         if user is not None:
             raise ValidationError(message="username must be unique")
@@ -270,6 +272,20 @@ class Publication:
         result = db.publications.delete_one({'_id': ObjectId(_id), 'owner': ObjectId(owner['sub'])})
         if result.deleted_count == 0:
             raise NotFound(message="publication not found")
+
+    # admin saa muokata kenen tahansa julkaisua
+    @staticmethod
+    @validate_patch_publication
+    def admin_patch(publication):
+        publication.update()
+        return jsonify(publication=publication.to_json())
+
+    # admin saa muokata kenen tahansa julkaisua
+    @staticmethod
+    @validate_delete_publication
+    def admin_delete(_id):
+        db.publications.delete_one({'_id': ObjectId(_id)})
+        return ""
 
 
 

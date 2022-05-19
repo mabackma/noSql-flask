@@ -3,7 +3,7 @@ from flask.views import MethodView
 from flask import request, jsonify
 from errors.not_found import NotFound
 from models import Publication
-from validators.validation_publications import validate_add_publication
+from validators.validation_publications import validate_add_publication, validate_patch_publication
 from flask_jwt_extended import jwt_required, get_jwt
 
 
@@ -69,10 +69,15 @@ class PublicationRouteHandler(MethodView):
     @jwt_required(optional=False) # @jwt_required(), False on oletusarvo
     def delete(self, _id):
         logged_in_user = get_jwt()
-        if logged_in_user['role'] == 'admin':
-            Publication.delete_by_id(_id)
-        elif logged_in_user['role'] == 'user':
+
+        # poistetaan tietokannasta jos kyseessä 'user'.
+        if logged_in_user['role'] == 'user':
             Publication.delete_by_id_and_owner(_id, logged_in_user)
+
+        # poistetaan tietokannasta jos kyseessä 'admin'.
+        # Tarkistus tapahtuu admin_delete funktiolla joka käyttää validate_delete_publication dekoraattoria
+        Publication.admin_delete(_id)
+
         return ""
 
     @jwt_required(optional=False)
@@ -80,8 +85,7 @@ class PublicationRouteHandler(MethodView):
         logged_in_user = get_jwt()
         publication = Publication.get_by_id(_id)
 
-        # käyttäjä on aina 'admin' tai 'user', ja vain 'user' voi saada NotFound errorin.
-        # 'admin' voi aina muokata publicationia.
+        # käyttäjä on aina 'admin' tai 'user'
         if logged_in_user['role'] == 'user':
             if publication.owner is None or str(publication.owner) != logged_in_user['sub']:
                 raise NotFound(message="publication not found")
@@ -95,8 +99,14 @@ class PublicationRouteHandler(MethodView):
         publication.description = request_body.get('description', publication.description)
         publication.visibility = request_body.get('visibility', publication.visibility)
 
-        # päivitetään publication tietokantaan
-        publication.update()
+        # päivitetään publication tietokantaan jos kyseessä 'user'
+        if logged_in_user['role'] == 'user':
+            publication.update()
+
+        # päivitetään tietokantaan jos kyseessä 'admin'.
+        # Tarkistus tapahtuu admin_patch funktiolla joka käyttää validate_patch_publication dekoraattoria
+        Publication.admin_patch(publication)
+
         return jsonify(publication=publication.to_json())
 
     # Tekee samat asiat kun patch
@@ -112,7 +122,9 @@ class PublicationRouteHandler(MethodView):
         publication.title = request_body.get('title', publication.title)
         publication.description = request_body.get('description', publication.description)
         publication.visibility = request_body.get('visibility', publication.visibility)
-        publication.update()
+        if logged_in_user['role'] == 'user':
+            publication.update()
+        Publication.admin_patch(publication)
         return jsonify(publication=publication.to_json())
 
 
