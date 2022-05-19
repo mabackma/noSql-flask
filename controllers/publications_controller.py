@@ -5,6 +5,7 @@ from flask.views import MethodView
 from flask import request, jsonify
 from errors.not_found import NotFound
 from models import Publication
+from validators.auth import validate_logged_in_user
 from validators.validation_publications import validate_add_publication, validate_patch_publication
 from flask_jwt_extended import jwt_required, get_jwt
 
@@ -69,6 +70,7 @@ class PublicationRouteHandler(MethodView):
         return jsonify(publication=publication.to_json())
 
     @jwt_required(optional=False) # @jwt_required(), False on oletusarvo
+    @validate_logged_in_user
     def delete(self, _id):
         logged_in_user = get_jwt()
 
@@ -84,6 +86,7 @@ class PublicationRouteHandler(MethodView):
         return ""
 
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def patch(self, _id):
         logged_in_user = get_jwt()
         publication = Publication.get_by_id(_id)
@@ -115,6 +118,7 @@ class PublicationRouteHandler(MethodView):
 
     # Tekee samat asiat kun patch
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def put(self, _id):
         logged_in_user = get_jwt()
         publication = Publication.get_by_id(_id)
@@ -136,6 +140,7 @@ class PublicationRouteHandler(MethodView):
 class LikePublicationRouteHandler(MethodView):
     # /api/publications/<_id>/like
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def patch(self, _id):
         logged_in_user = get_jwt()
         publication = Publication.get_by_id(_id)
@@ -157,6 +162,7 @@ class LikePublicationRouteHandler(MethodView):
 class SharePublicationRouteHandler(MethodView):
     # /api/publications/<_id>/share
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def patch(self, _id):
 
         publication = Publication.get_by_id(_id)
@@ -167,5 +173,4 @@ class SharePublicationRouteHandler(MethodView):
 
         publication.shares += 1
         publication.share()
-        print('shares: ', publication.shares)
         return jsonify(publication=publication.to_json())

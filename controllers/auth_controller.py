@@ -5,6 +5,7 @@ from models import User
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 from errors.validation_error import ValidationError
+from validators.auth import validate_logged_in_user
 
 
 class RegisterRouteHandler(MethodView):
@@ -37,12 +38,14 @@ class LoginRouteHandler(MethodView):
 class AccountRouteHandler(MethodView):
 
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def get(self):
         logged_in_user = get_jwt()
         account = User.get_by_id(logged_in_user['sub'])
         return jsonify(account=account.to_json())
 
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def patch(self):
         logged_in_user = get_jwt()
         account = User.get_by_id(logged_in_user['sub'])
@@ -55,6 +58,7 @@ class AccountRouteHandler(MethodView):
 class AccountPasswordRouteHandler(MethodView):
 
     @jwt_required(optional=False)
+    @validate_logged_in_user
     def patch(self):
         logged_in_user = get_jwt()
         account = User.get_by_id(logged_in_user['sub'])
