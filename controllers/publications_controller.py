@@ -73,6 +73,7 @@ class PublicationRouteHandler(MethodView):
         # poistetaan tietokannasta jos kyseessä 'user'.
         if logged_in_user['role'] == 'user':
             Publication.delete_by_id_and_owner(_id, logged_in_user)
+            return ""
 
         # poistetaan tietokannasta jos kyseessä 'admin'.
         # Tarkistus tapahtuu admin_delete funktiolla joka käyttää validate_delete_publication dekoraattoria
@@ -102,6 +103,7 @@ class PublicationRouteHandler(MethodView):
         # päivitetään publication tietokantaan jos kyseessä 'user'
         if logged_in_user['role'] == 'user':
             publication.update()
+            return jsonify(publication=publication.to_json())
 
         # päivitetään tietokantaan jos kyseessä 'admin'.
         # Tarkistus tapahtuu admin_patch funktiolla joka käyttää validate_patch_publication dekoraattoria
@@ -124,6 +126,7 @@ class PublicationRouteHandler(MethodView):
         publication.visibility = request_body.get('visibility', publication.visibility)
         if logged_in_user['role'] == 'user':
             publication.update()
+            return jsonify(publication=publication.to_json())
         Publication.admin_patch(publication)
         return jsonify(publication=publication.to_json())
 

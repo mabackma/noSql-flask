@@ -28,5 +28,5 @@ def validate_delete_publication(publications_route_handler):
         print("Admin voi poistaa! " + logged_in_user['role'])
         if logged_in_user['role'] == 'admin':
             return publications_route_handler(*args, **kwargs)
-        raise ValidationError(message="Must be admin to update post")
+        raise ValidationError(message="Must be admin to delete post")
     return validate_delete_publication_wrapper
