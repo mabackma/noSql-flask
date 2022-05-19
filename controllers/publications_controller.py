@@ -76,7 +76,7 @@ class PublicationRouteHandler(MethodView):
             return ""
 
         # poistetaan tietokannasta jos kyseessä 'admin'.
-        # Tarkistus tapahtuu admin_delete funktiolla joka käyttää validate_delete_publication dekoraattoria
+        # Tarkistus tapahtuu admin_delete funktiolla joka käyttää validate_delete_publication dekoraattoria.
         Publication.admin_delete(_id)
 
         return ""

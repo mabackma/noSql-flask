@@ -273,14 +273,14 @@ class Publication:
         if result.deleted_count == 0:
             raise NotFound(message="publication not found")
 
-    # admin saa muokata kenen tahansa julkaisua
+    # admin saa muokata kenen tahansa julkaisua.
     @staticmethod
     @validate_patch_publication
     def admin_patch(publication):
         publication.update()
         return jsonify(publication=publication.to_json())
 
-    # admin saa poistaa kenen tahansa julkaisua
+    # admin saa poistaa kenen tahansa julkaisua.
     @staticmethod
     @validate_delete_publication
     def admin_delete(_id):
