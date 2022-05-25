@@ -190,3 +190,28 @@ class PublicationCommentsRouteHandler(MethodView):
             return jsonify(comment=comment.to_json())
         raise ValidationError(message="body is required")
 
+    def get(self, _id):
+        # publication = Publication.get_by_id(_id)
+        # comments = publication.get_comments()
+
+        comments = Comment.get_all_by_publication(_id)
+        return jsonify(comments=Comment.list_to_json(comments))
+
+
+class PublicationCommentRouteHandler(MethodView):
+
+    @jwt_required()
+    @validate_logged_in_user
+    def delete(self, _id, comment_id):
+        Comment.delete_by_id(comment_id)
+        return ""
+
+    @jwt_required()
+    @validate_logged_in_user
+    def patch(self, _id, comment_id):
+        request_body = request.get_json()
+        if request_body and 'body' in request_body:
+            comment = Comment.update_by_id(comment_id, request_body['body'])
+            return jsonify(comment=comment.to_json())
+        raise ValidationError(message="body is required")
+

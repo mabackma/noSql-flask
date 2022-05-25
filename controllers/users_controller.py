@@ -50,11 +50,5 @@ class UserRouteHandler(MethodView):
         user.update()
         return jsonify(user=user.to_json())
 
-"""
-class PictureRouteHandler(MethodView):
-    
-    def get(self):
-        
-        
-"""
+
 

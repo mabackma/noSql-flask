@@ -319,8 +319,38 @@ class Comment:
             'publication': str(self.publication)
         }
 
+    @staticmethod
+    def list_to_json(comments):
+        comments_in_json = []
+        for comment in comments:
+            comments_in_json.append(comment.to_json())
+        return comments_in_json
+
     def create(self):
         result = db.comments.insert_one({'body': self.body, 'owner': ObjectId(self.owner),
                                          'publication': ObjectId(self.publication)})
         self._id = str(result.inserted_id)
+
+    @staticmethod
+    def get_all_by_publication(_publication_id):
+        comments = []
+        comments_cursor = db.comments.find({'publication': ObjectId(_publication_id)})
+        for comment in comments_cursor:
+            comments.append(Comment(comment['body'], comment['owner'], comment['publication'], _id=comment['_id']))
+        return comments
+
+    @staticmethod
+    def update_by_id(_comment_id, body):
+        _filter = {'_id': ObjectId(_comment_id)}
+        _update = {'$set': {'body': body}}
+        db.comments.update_one(_filter, _update)
+        comment = db.comments.find_one({'_id': ObjectId(_comment_id)})
+        return Comment(body, comment['owner'], comment['publication'], _id=comment['_id'])
+
+    @staticmethod
+    def delete_by_id(_comment_id):
+        db.comments.delete_one({'_id': ObjectId(_comment_id)})
+
+
+
 
