@@ -67,5 +67,5 @@ class AccountPasswordRouteHandler(MethodView):
             account.password = sha256.hash(request_body['password'])
             account.update_password()
             return ""
-        raise ValidationError(message="password is required")
+        raise ValidationError(message="password is required!")
 
