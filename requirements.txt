@@ -2,3 +2,4 @@ flask
 pymongo[srv]==3.12.1
 passlib
 flask_jwt_extended
+gunicorn
