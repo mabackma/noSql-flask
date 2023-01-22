@@ -51,4 +51,4 @@ app.add_url_rule("/api/account", view_func=AccountRouteHandler.as_view('account_
 app.add_url_rule("/api/account/password",
                  view_func=AccountPasswordRouteHandler.as_view('account_password_route_handler'), methods=["PATCH"])
 
-app.run(debug=True)
+#app.run(debug=True)
