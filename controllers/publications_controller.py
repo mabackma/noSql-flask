@@ -5,7 +5,8 @@ from flask.views import MethodView
 from flask import request, jsonify
 from errors.not_found import NotFound
 from models import Publication, Comment
-from validators.auth import validate_logged_in_user
+#from validators.auth import validate_logged_in_user
+from auth import validate_logged_in_user
 from validators.validation_publications import validate_add_publication, validate_patch_publication
 from flask_jwt_extended import jwt_required, get_jwt
 
