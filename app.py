@@ -9,6 +9,7 @@ from controllers.users_controller import UsersRouteHandler, UserRouteHandler
 from errors.validation_error import ValidationError
 from errors.not_found import NotFound
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -51,4 +52,4 @@ app.add_url_rule("/api/account", view_func=AccountRouteHandler.as_view('account_
 app.add_url_rule("/api/account/password",
                  view_func=AccountPasswordRouteHandler.as_view('account_password_route_handler'), methods=["PATCH"])
 
-#app.run(debug=True)
+CORS(app)
