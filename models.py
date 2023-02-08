@@ -236,6 +236,7 @@ class Publication:
         publications = Publication._list_from_json(publications_list)
         return publications
 
+    # return type changed from cursor to doc
     @staticmethod
     def get_one_by_id_and_visibility(_id, visibility=2):
         publication = db.publications.find({'_id': ObjectId(_id), 'visibility': visibility})
