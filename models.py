@@ -239,10 +239,9 @@ class Publication:
     @staticmethod
     def get_one_by_id_and_visibility(_id, visibility=2):
         publication = db.publications.find({'_id': ObjectId(_id), 'visibility': visibility})
-        publication_doc = publication.next()
         if publication is None:
             raise NotFound(message="publication not found")
-        return Publication._from_json(publication_doc)
+        return Publication._from_json(publication)
 
     @staticmethod
     def get_logged_in_users_and_public_publications(logged_in_user):
